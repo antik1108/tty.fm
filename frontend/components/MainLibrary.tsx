@@ -2,9 +2,10 @@
 import React, { useMemo } from 'react';
 import { Song } from '../types';
 
+
 interface Props {
   songs: Song[];
-  currentSong: Song;
+  currentSong: Song | null;
   onSelect: (s: Song) => void;
   query: string;
 }
@@ -13,8 +14,8 @@ const MainLibrary: React.FC<Props> = ({ songs, currentSong, onSelect, query }) =
   const filteredSongs = useMemo(() => {
     if (!query) return songs;
     const lowerQuery = query.toLowerCase();
-    return songs.filter(s => 
-      s.title.toLowerCase().includes(lowerQuery) || 
+    return songs.filter(s =>
+      s.title.toLowerCase().includes(lowerQuery) ||
       s.artist.toLowerCase().includes(lowerQuery)
     );
   }, [songs, query]);
@@ -39,14 +40,14 @@ const MainLibrary: React.FC<Props> = ({ songs, currentSong, onSelect, query }) =
           </thead>
           <tbody className="text-sm">
             {filteredSongs.map((song) => {
-              const isActive = song.id === currentSong.id;
+              const isActive = currentSong?.id === song.id;
+
               return (
-                <tr 
+                <tr
                   key={song.id}
                   onClick={() => onSelect(song)}
-                  className={`border-b border-[#4b2485] cursor-pointer transition-colors ${
-                    isActive ? 'bg-[#9046FF] text-black font-bold' : 'hover:bg-[#4b2485] hover:text-white'
-                  }`}
+                  className={`border-b border-[#4b2485] cursor-pointer transition-colors ${isActive ? 'bg-[#9046FF] text-black font-bold' : 'hover:bg-[#4b2485] hover:text-white'
+                    }`}
                 >
                   <td className="p-2 font-mono">{song.hexId}</td>
                   <td className="p-2 truncate uppercase">
@@ -70,14 +71,14 @@ const MainLibrary: React.FC<Props> = ({ songs, currentSong, onSelect, query }) =
       <div className="mt-4 flex gap-4 text-xs shrink-0">
         <div className="border border-[#9046FF] p-2 flex-1">
           <span className="text-white font-bold block mb-1">METADATA:</span>
-          BITRATE: 320kbps<br/>
-          FORMAT: FLAC<br/>
+          BITRATE: 320kbps<br />
+          FORMAT: FLAC<br />
           SAMP_RATE: 44.1kHz
         </div>
         <div className="border border-[#9046FF] p-2 flex-1">
           <span className="text-white font-bold block mb-1">SYSTEM_INFO:</span>
-          DRIVER: CORE_AUDIO_01<br/>
-          BUFFER: 512ms<br/>
+          DRIVER: CORE_AUDIO_01<br />
+          BUFFER: 512ms<br />
           LATENCY: 12ms
         </div>
       </div>

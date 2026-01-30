@@ -17,7 +17,8 @@ export enum ViewMode {
   HOME = 'HOME',
   BROWSE = 'BROWSE',
   LIBRARY = 'LIBRARY',
-  FAVORITES = 'FAVORITES'
+  FAVORITES = 'FAVORITES',
+  UPLOAD = 'UPLOAD'
 }
 
 export interface SystemStats {

@@ -1,26 +1,55 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { MOCK_SONGS, MOCK_PLAYLISTS } from './constants';
+import { MOCK_PLAYLISTS } from './constants';
 import { Song, ViewMode, SystemStats } from './types';
 import Sidebar from './components/Sidebar';
 import MainLibrary from './components/MainLibrary';
 import RightPanel from './components/RightPanel';
 import PlayerBar from './components/PlayerBar';
 import TerminalHeader from './components/TerminalHeader';
+import UploadView from './components/UploadView'; // Will create this next
+import { LibraryService } from './services/LibraryService';
 
 const App: React.FC = () => {
-  const [currentSong, setCurrentSong] = useState<Song>(MOCK_SONGS[3]); // BLINDING LIGHTS
+  // Songs state
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(102); // 01:42
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.HOME);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // System stats simulation
   const [stats, setStats] = useState<SystemStats>({
     cpu: 12,
     mem: '256MB',
-    time: '14:42:01'
+    time: '00:00:00'
   });
 
-  // Simulate system clock and slight resource fluctuations
+  // Fetch songs on mount
+  useEffect(() => {
+    const fetchSongs = async () => {
+      try {
+        setIsLoading(true);
+        const data = await LibraryService.getSongs();
+        setSongs(data);
+        if (data.length > 0) {
+          setCurrentSong(data[0]);
+        }
+      } catch (err) {
+        setError('FATAL: CONNECTION_REFUSED_TO_MAINFRAME');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSongs();
+  }, []);
+
+  // Simulate system clock
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -33,28 +62,51 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Simulate playback
-  useEffect(() => {
-    let interval: number;
-    if (isPlaying) {
-      interval = window.setInterval(() => {
-        setCurrentTime(prev => {
-          if (prev >= currentSong.durationSeconds) {
-            setIsPlaying(false);
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying, currentSong]);
-
   const handleSongSelect = useCallback((song: Song) => {
     setCurrentSong(song);
-    setCurrentTime(0);
     setIsPlaying(true);
   }, []);
+
+  // Render content based on ViewMode
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center flex-1 text-[#9046FF] animate-pulse">
+          &gt; INITIALIZING_UPLINK...
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center flex-1 text-red-500 gap-4">
+          <div className="border border-red-500 p-4">
+            <h2 className="font-bold text-xl mb-2">SYSTEM_FAILURE</h2>
+            <p>{error}</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="border border-[#9046FF] px-4 py-2 hover:bg-[#9046FF] hover:text-black text-[#9046FF]"
+          >
+            [ REBOOT_SYSTEM ]
+          </button>
+        </div>
+      );
+    }
+
+    if (viewMode === ViewMode.UPLOAD) {
+      return <UploadView />;
+    }
+
+    return (
+      <MainLibrary
+        songs={songs}
+        currentSong={currentSong || songs[0] || null}
+        onSelect={handleSongSelect}
+        query={searchQuery}
+      />
+    );
+  };
 
   return (
     <div className="h-screen flex flex-col p-2 bg-black select-none overflow-hidden text-[#9046FF]">
@@ -63,34 +115,28 @@ const App: React.FC = () => {
 
       <div className="flex flex-1 min-h-0">
         {/* Left Side: Navigation & Playlists */}
-        <Sidebar 
-          currentView={viewMode} 
-          setView={setViewMode} 
-          playlists={MOCK_PLAYLISTS} 
+        <Sidebar
+          currentView={viewMode}
+          setView={setViewMode}
+          playlists={MOCK_PLAYLISTS}
         />
 
-        {/* Center: Song List & Meta */}
-        <MainLibrary 
-          songs={MOCK_SONGS} 
-          currentSong={currentSong} 
-          onSelect={handleSongSelect}
-          query={searchQuery}
-        />
+        {/* Center: Content Area */}
+        {renderContent()}
 
         {/* Right Side: Queue & Search */}
-        <RightPanel 
-          songs={MOCK_SONGS} 
-          searchQuery={searchQuery} 
-          setSearchQuery={setSearchQuery} 
+        <RightPanel
+          songs={songs}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
         />
       </div>
 
       {/* Footer: Controls */}
-      <PlayerBar 
-        song={currentSong} 
-        isPlaying={isPlaying} 
+      <PlayerBar
+        song={currentSong}
+        isPlaying={isPlaying}
         setIsPlaying={setIsPlaying}
-        currentTime={currentTime}
       />
 
       {/* Decorative corner brackets */}
