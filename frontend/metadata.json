@@ -1,0 +1,6 @@
+
+{
+  "name": "Terminal Music Player",
+  "description": "A retro-futuristic CLI-inspired music player interface with real-time system stats and AI-powered track insights.",
+  "requestFramePermissions": []
+}
