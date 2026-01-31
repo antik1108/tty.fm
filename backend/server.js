@@ -24,6 +24,20 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ONLINE', uptime: process.uptime() });
 });
 
+// Root route
+app.get('/', (req, res) => {
+    res.send(`
+        <body style="background:black; color:#9046FF; font-family:monospace; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
+            <div style="text-align:center;">
+                <h1>TTY.FM MAINFRAME</h1>
+                <p>SYSTEM STATUS: <span style="color:green;">ONLINE</span></p>
+                <p>PORT: ${PORT}</p>
+                <p>ENDPOINTS: /api/library, /api/stream/:id, /api/upload</p>
+            </div>
+        </body>
+    `);
+});
+
 app.listen(PORT, () => {
     console.log(`
     ┌───────────────────────────────┐
