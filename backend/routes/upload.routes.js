@@ -5,10 +5,13 @@ const multer = require('multer');
 const path = require('path');
 const LibraryModule = require('../core/library');
 
+
+const { MUSIC_DIR } = require('../paths');
+
 // Configure storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '../music'));
+        cb(null, MUSIC_DIR);
     },
     filename: function (req, file, cb) {
         // Keep original filename or sanitize it

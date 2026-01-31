@@ -3,7 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const mime = require('mime-types'); // Using a simpler mapping if package not avail, but we didn't install mime-types. Let's use basic lookup.
 
-const MUSIC_DIR = path.join(__dirname, '../music');
+
+const { MUSIC_DIR } = require('../paths');
+
 
 const StreamerModule = {
     streamFile(req, res, filename) {

@@ -4,13 +4,13 @@ const path = require('path');
 const crypto = require('crypto');
 const mm = require('music-metadata');
 
-const MUSIC_DIR = path.join(__dirname, '../music');
-const DATA_DIR = path.join(__dirname, '../data');
-const LIBRARY_FILE = path.join(DATA_DIR, 'library.json');
+
+const { MUSIC_DIR, DATA_DIR, LIBRARY_FILE } = require('../paths');
 
 // Ensure directories exist
 if (!fs.existsSync(MUSIC_DIR)) fs.mkdirSync(MUSIC_DIR, { recursive: true });
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+
 
 let cachedLibrary = [];
 

@@ -58,20 +58,13 @@ const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ==============================
-// ABSOLUTE PATHS (IMPORTANT)
-// ==============================
-const BASE_DIR = __dirname;
-const DATA_DIR = path.join(BASE_DIR, "data");
-const MUSIC_DIR = path.join(process.env.HOME, "tty-fm", "music");
 
-// Ensure required directories exist
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(MUSIC_DIR)) fs.mkdirSync(MUSIC_DIR, { recursive: true });
+const { MUSIC_DIR, DATA_DIR } = require('./paths');
 
 // Make paths available to routes
 app.locals.MUSIC_DIR = MUSIC_DIR;
 app.locals.DATA_DIR = DATA_DIR;
+
 
 // ==============================
 // MIDDLEWARE
