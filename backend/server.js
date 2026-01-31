@@ -59,7 +59,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 
-const { MUSIC_DIR, DATA_DIR } = require('./paths');
+
+const { MUSIC_DIR, DATA_DIR, BASE_DIR } = require('./paths');
+
 
 // Make paths available to routes
 app.locals.MUSIC_DIR = MUSIC_DIR;

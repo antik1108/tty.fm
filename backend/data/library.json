@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "76f16fc2",
+    "hexId": "0x76",
+    "title": "DUMMY_SONG.OPUS",
+    "artist": "UNKNOWN ARTIST",
+    "durationSeconds": 11,
+    "duration": "00:11",
+    "filename": "dummy_song.opus",
+    "size": 26592
+  }
+]

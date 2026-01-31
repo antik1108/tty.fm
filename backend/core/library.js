@@ -18,7 +18,7 @@ const LibraryModule = {
     async scanLibrary() {
         console.log('[LIBRARY] Scanning music directory...');
         try {
-            const files = fs.readdirSync(MUSIC_DIR).filter(f => f.match(/\.(mp3|wav|ogg|m4a|flac)$/i));
+            const files = fs.readdirSync(MUSIC_DIR).filter(f => f.match(/\.(mp3|wav|ogg|opus|m4a|flac)$/i));
             const library = [];
 
             for (const file of files) {
