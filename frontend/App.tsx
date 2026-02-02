@@ -28,24 +28,25 @@ const App: React.FC = () => {
     time: '00:00:00'
   });
 
+  // Fetch songs function (reusable)
+  const fetchSongs = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const data = await LibraryService.getSongs();
+      setSongs(data);
+      if (data.length > 0 && !currentSong) {
+        setCurrentSong(data[0]);
+      }
+    } catch (err) {
+      setError('FATAL: CONNECTION_REFUSED_TO_MAINFRAME');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentSong]);
+
   // Fetch songs on mount
   useEffect(() => {
-    const fetchSongs = async () => {
-      try {
-        setIsLoading(true);
-        const data = await LibraryService.getSongs();
-        setSongs(data);
-        if (data.length > 0) {
-          setCurrentSong(data[0]);
-        }
-      } catch (err) {
-        setError('FATAL: CONNECTION_REFUSED_TO_MAINFRAME');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchSongs();
   }, []);
 
@@ -95,7 +96,7 @@ const App: React.FC = () => {
     }
 
     if (viewMode === ViewMode.UPLOAD) {
-      return <UploadView />;
+      return <UploadView onUploadComplete={fetchSongs} />;
     }
 
     return (

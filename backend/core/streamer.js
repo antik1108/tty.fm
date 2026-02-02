@@ -52,6 +52,7 @@ const StreamerModule = {
             case '.mp3': return 'audio/mpeg';
             case '.wav': return 'audio/wav';
             case '.ogg': return 'audio/ogg';
+            case '.opus': return 'audio/opus';
             case '.m4a': return 'audio/mp4';
             case '.flac': return 'audio/flac';
             default: return 'application/octet-stream';

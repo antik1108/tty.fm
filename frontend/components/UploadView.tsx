@@ -2,7 +2,11 @@
 import React, { useState } from 'react';
 import { LibraryService } from '../services/LibraryService';
 
-const UploadView: React.FC = () => {
+interface Props {
+    onUploadComplete?: () => void;
+}
+
+const UploadView: React.FC<Props> = ({ onUploadComplete }) => {
     const [file, setFile] = useState<File | null>(null);
     const [status, setStatus] = useState<string>('WAITING_FOR_INPUT');
     const [isUploading, setIsUploading] = useState(false);
@@ -24,6 +28,10 @@ const UploadView: React.FC = () => {
             await LibraryService.uploadSong(file);
             setStatus('UPLOAD_COMPLETE. SYNCED_TO_MAINFRAME.');
             setFile(null);
+            // Refresh the library after upload
+            if (onUploadComplete) {
+                onUploadComplete();
+            }
         } catch (error) {
             console.error(error);
             setStatus('ERROR: UPLOAD_FAILED. CONNECTION_RESET.');

@@ -8,5 +8,15 @@
     "duration": "00:11",
     "filename": "dummy_song.opus",
     "size": 26592
+  },
+  {
+    "id": "23651354",
+    "hexId": "0x23",
+    "title": "VANSH_DUMMY.OPUS",
+    "artist": "UNKNOWN ARTIST",
+    "durationSeconds": 5,
+    "duration": "00:05",
+    "filename": "vansh_dummy.opus",
+    "size": 13808
   }
 ]
