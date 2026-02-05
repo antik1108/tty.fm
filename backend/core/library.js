@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const mm = require('music-metadata');
 
 
-const { MUSIC_DIR, DATA_DIR, LIBRARY_FILE } = require('../paths');
+const { MUSIC_DIR, DATA_DIR, LIBRARY_FILE, getPlaylistFolders, getPlaylistPath } = require('../paths');
 
 // Ensure directories exist
 if (!fs.existsSync(MUSIC_DIR)) fs.mkdirSync(MUSIC_DIR, { recursive: true });
@@ -16,49 +16,65 @@ let cachedLibrary = [];
 
 const LibraryModule = {
     async scanLibrary() {
-        console.log('[LIBRARY] Scanning music directory...');
+        console.log('[LIBRARY] Scanning music directory with playlists...');
         try {
-            const files = fs.readdirSync(MUSIC_DIR).filter(f => f.match(/\.(mp3|wav|ogg|opus|m4a|flac)$/i));
             const library = [];
+            const playlists = getPlaylistFolders();
 
-            for (const file of files) {
-                const filePath = path.join(MUSIC_DIR, file);
-                const stats = fs.statSync(filePath);
+            // Also scan root folder for uncategorized songs
+            const allFolders = ['', ...playlists]; // '' represents root folder
 
-                // Deterministic ID based on filename
-                const id = crypto.createHash('md5').update(file).digest('hex').substring(0, 8);
-                const hexId = '0x' + id.substring(0, 2).toUpperCase();
+            for (const folder of allFolders) {
+                const folderPath = folder ? getPlaylistPath(folder) : MUSIC_DIR;
+                
+                if (!fs.existsSync(folderPath)) continue;
 
-                let metadata = {
-                    title: file,
-                    artist: 'Unknown Artist',
-                    duration: 0
-                };
+                const files = fs.readdirSync(folderPath).filter(f => 
+                    f.match(/\.(mp3|wav|ogg|opus|m4a|flac)$/i) && 
+                    !fs.statSync(path.join(folderPath, f)).isDirectory()
+                );
 
-                try {
-                    const cleanMetadata = await mm.parseFile(filePath);
-                    metadata.title = cleanMetadata.common.title || file;
-                    metadata.artist = cleanMetadata.common.artist || 'Unknown Artist';
-                    metadata.duration = cleanMetadata.format.duration || 0;
-                } catch (err) {
-                    console.warn(`[LIBRARY] Failed to parse metadata for ${file}:`, err.message);
+                for (const file of files) {
+                    const filePath = path.join(folderPath, file);
+                    const stats = fs.statSync(filePath);
+
+                    // Deterministic ID based on folder + filename
+                    const idSource = folder ? `${folder}/${file}` : file;
+                    const id = crypto.createHash('md5').update(idSource).digest('hex').substring(0, 8);
+                    const hexId = '0x' + id.substring(0, 2).toUpperCase();
+
+                    let metadata = {
+                        title: file,
+                        artist: 'Unknown Artist',
+                        duration: 0
+                    };
+
+                    try {
+                        const cleanMetadata = await mm.parseFile(filePath);
+                        metadata.title = cleanMetadata.common.title || file;
+                        metadata.artist = cleanMetadata.common.artist || 'Unknown Artist';
+                        metadata.duration = cleanMetadata.format.duration || 0;
+                    } catch (err) {
+                        console.warn(`[LIBRARY] Failed to parse metadata for ${file}:`, err.message);
+                    }
+
+                    library.push({
+                        id,
+                        hexId,
+                        title: metadata.title.toUpperCase(), // Terminal style
+                        artist: metadata.artist.toUpperCase(),
+                        durationSeconds: Math.floor(metadata.duration),
+                        duration: this.formatTime(metadata.duration),
+                        filename: file,
+                        size: stats.size,
+                        playlist: folder || null // null means root/uncategorized
+                    });
                 }
-
-                library.push({
-                    id,
-                    hexId,
-                    title: metadata.title.toUpperCase(), // Terminal style
-                    artist: metadata.artist.toUpperCase(),
-                    durationSeconds: Math.floor(metadata.duration),
-                    duration: this.formatTime(metadata.duration),
-                    filename: file,
-                    size: stats.size
-                });
             }
 
             cachedLibrary = library;
             this.saveIndex();
-            console.log(`[LIBRARY] Index complete. ${library.length} songs found.`);
+            console.log(`[LIBRARY] Index complete. ${library.length} songs found across ${playlists.length} playlists.`);
             return library;
         } catch (error) {
             console.error('[LIBRARY] Scan failed:', error);
@@ -82,6 +98,11 @@ const LibraryModule = {
 
     getLibrary() {
         return cachedLibrary;
+    },
+
+    getLibraryByPlaylist(playlistName) {
+        if (!playlistName) return cachedLibrary;
+        return cachedLibrary.filter(s => s.playlist === playlistName);
     },
 
     getSongById(id) {

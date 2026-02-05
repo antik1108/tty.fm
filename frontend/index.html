@@ -1,79 +1,64 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terminal Music Player</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --terminal-black: #000000;
-            --terminal-purple: #9046FF;
-            --terminal-purple-dim: #4b2485;
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TTY.FM - Cyber Terminal</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "neon-purple": "#9046FF",
+            "matrix-green": "#00FF00",
+            "cyber-cyan": "#00FFFF",
+            "alert-yellow": "#FFD700",
+            "terminal-bg": "#020202",
+            "terminal-border": "#1a1b26"
+          },
+          fontFamily: {
+            "mono": ["'JetBrains Mono'", "monospace"]
+          },
+          animation: {
+            "spin-slow": "spin 12s linear infinite",
+            "blink": "blink 1s step-end infinite",
+            "bar-1": "bounceHeight 0.5s ease-in-out infinite alternate",
+            "bar-2": "bounceHeight 0.8s ease-in-out infinite alternate-reverse",
+            "bar-3": "bounceHeight 0.6s ease-in-out infinite alternate",
+            "wave-scroll": "waveScroll 4s linear infinite"
+          },
+          keyframes: {
+            blink: { "0%, 100%": { opacity: 1 }, "50%": { opacity: 0 } },
+            bounceHeight: { "0%": { height: "20%", filter: "blur(1px)" }, "100%": { height: "95%", filter: "blur(3px)" } },
+            waveScroll: { "0%": { transform: "translateX(-100%)" }, "100%": { transform: "translateX(100%)" } }
+          }
         }
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background-color: var(--terminal-black);
-            color: var(--terminal-purple);
-            overflow: hidden;
-        }
-        /* Custom scrollbar to match the terminal theme */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--terminal-black);
-            border-left: 1px solid var(--terminal-purple-dim);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--terminal-purple);
-        }
-        ::-webkit-scrollbar-corner {
-            background: var(--terminal-black);
-        }
-
-        /* CRT flicker and scanline effects (optional but cool) */
-        .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 50;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-            opacity: 0.1;
-        }
-
-        .cursor-blink {
-            animation: blink 1s step-end infinite;
-        }
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
-
-        * {
-            border-radius: 0 !important;
-        }
-    </style>
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
+      }
+    };
+  </script>
+  <style type="text/tailwindcss">
+    .crt-glow-purple { filter: drop-shadow(0 0 8px rgba(144, 70, 255, 0.7)); }
+    .crt-glow-green { filter: drop-shadow(0 0 8px rgba(0, 255, 0, 0.7)); }
+    .crt-glow-cyan { filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.7)); }
+    .scanline {
+      background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      background-size: 100% 3px, 3px 100%;
+      pointer-events: none;
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #020202; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #1a1b26; border-radius: 2px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9046FF; }
+  </style>
+  <link rel="stylesheet" href="/index.css" />
 </head>
-<body>
-    <div id="root"></div>
-    <div class="scanlines"></div>
-<script type="module" src="/index.tsx"></script>
+<body class="h-screen flex flex-col overflow-hidden relative">
+  <div class="fixed inset-0 scanline z-[100] pointer-events-none opacity-30"></div>
+  <div id="root" class="h-full flex flex-col overflow-hidden"></div>
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>

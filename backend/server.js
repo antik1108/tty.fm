@@ -86,6 +86,7 @@ app.use("/api/library", require("./routes/library.routes"));
 app.use("/api/stream", require("./routes/stream.routes"));
 app.use("/api/upload", require("./routes/upload.routes"));
 app.use("/api/system", require("./routes/system.routes"));
+app.use("/api/playlists", require("./routes/playlist.routes"));
 
 // ==============================
 // HEALTH CHECK

@@ -72,36 +72,6 @@ detect_os() {
 }
 
 # Install Node.js based on OS
-install_nodejs() {
-    local os=$(detect_os)
-    log_info "Installing Node.js..."
-    
-    case $os in
-        arch)
-            sudo pacman -S --noconfirm nodejs npm
-            ;;
-        debian)
-            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-            sudo apt install -y nodejs
-            ;;
-        fedora)
-            sudo dnf install -y nodejs npm
-            ;;
-        macos)
-            if command_exists brew; then
-                brew install node
-            else
-                log_error "Homebrew not found. Please install Node.js manually from https://nodejs.org"
-                exit 1
-            fi
-            ;;
-        *)
-            log_error "Unsupported OS. Please install Node.js manually from https://nodejs.org"
-            exit 1
-            ;;
-    esac
-}
-
 # Check and install Node.js
 check_nodejs() {
     log_info "Checking for Node.js..."
@@ -113,12 +83,12 @@ check_nodejs() {
         # Check if version is >= 18
         local major_version=$(echo $node_version | cut -d'.' -f1 | tr -d 'v')
         if [ "$major_version" -lt 18 ]; then
-            log_warning "Node.js version is below 18. Upgrading..."
-            install_nodejs
+            log_error "Node.js version is below 18. Please upgrade Node.js on this server."
+            exit 1
         fi
     else
-        log_warning "Node.js not found. Installing..."
-        install_nodejs
+        log_error "Node.js not found. Please install Node.js (>=18) and rerun."
+        exit 1
     fi
 }
 
@@ -183,6 +153,11 @@ setup_music_dir() {
 # Kill any existing processes on our ports
 cleanup_ports() {
     log_info "Checking for processes on ports 3000 and 3001..."
+    
+    if ! command_exists lsof; then
+        log_warning "lsof not found; skipping port cleanup"
+        return
+    fi
     
     # Kill process on port 3001 (backend)
     if lsof -ti:3001 &> /dev/null; then

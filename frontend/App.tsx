@@ -1,150 +1,322 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { MOCK_PLAYLISTS } from './constants';
-import { Song, ViewMode, SystemStats } from './types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import MainLibrary from './components/MainLibrary';
+import MainContent from './components/MainContent';
 import RightPanel from './components/RightPanel';
-import PlayerBar from './components/PlayerBar';
-import TerminalHeader from './components/TerminalHeader';
-import UploadView from './components/UploadView'; // Will create this next
+import Footer from './components/Footer';
+import SystemLogs from './components/SystemLogs';
+import UploadPanel from './components/UploadPanel';
 import { LibraryService } from './services/LibraryService';
+import { SystemService } from './services/SystemService';
+import { Playlist, Song, SystemLog, SystemStats, ViewMode } from './types';
+
+const INITIAL_STATS: SystemStats = {
+  latency: 12,
+  status: 'OPTIMIZED',
+  uptime: '00:00:00',
+  nodeLoad: 0,
+  nodeName: 'LOCAL_NODE'
+};
+
+const INSIGHT_TEMPLATES = [
+  'DATASTREAM_COHERENT: SYNTH_CHANNELS ALIGNED.',
+  'NEURAL_SIGNATURE_OK: RHYTHM_GRID LOCKED.',
+  'SPECTRAL_SCAN CLEAN: SUB_BASS THRESHOLD STABLE.',
+  'NODE_FEEDBACK: AUDIO_MATRIX STABLE UNDER LOAD.',
+  'ENCRYPTED_STREAM VERIFIED: SIGNAL TO NOISE OPTIMAL.'
+];
+
+const formatBytes = (bytes?: number) => {
+  if (!bytes || Number.isNaN(bytes)) return '--';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = bytes;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+  return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+};
+
+const formatTime = (seconds: number) => {
+  if (!seconds || Number.isNaN(seconds)) return '00:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
 
 const App: React.FC = () => {
-  // Songs state
   const [songs, setSongs] = useState<Song[]>([]);
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [uncategorizedCount, setUncategorizedCount] = useState(0);
+  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.LIBRARY);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(80);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [logs, setLogs] = useState<SystemLog[]>([]);
+  const [stats, setStats] = useState<SystemStats>(INITIAL_STATS);
+  const [neuralInsight, setNeuralInsight] = useState('SYSTEM_IDLE: AWAITING_INPUT...');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [currentSong, setCurrentSong] = useState<Song | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.HOME);
-  const [searchQuery, setSearchQuery] = useState('');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // System stats simulation
-  const [stats, setStats] = useState<SystemStats>({
-    cpu: 12,
-    mem: '256MB',
-    time: '00:00:00'
-  });
+  const addLog = useCallback((level: SystemLog['level'], message: string) => {
+    const newLog: SystemLog = {
+      id: Math.random().toString(36).slice(2, 10),
+      timestamp: new Date().toLocaleTimeString('en-GB', { hour12: false }),
+      level,
+      message
+    };
+    setLogs((prev) => [...prev.slice(-20), newLog]);
+  }, []);
 
-  // Fetch songs function (reusable)
-  const fetchSongs = useCallback(async () => {
+  const normalizeSongs = useCallback((data: Song[]) => {
+    return data.map((song) => ({
+      ...song,
+      size: formatBytes(typeof song.size === 'number' ? song.size : undefined),
+      genre: song.genre || 'AUDIO'
+    }));
+  }, []);
+
+  const fetchPlaylists = useCallback(async () => {
+    const data = await LibraryService.getPlaylists();
+    setPlaylists(data.playlists);
+    setUncategorizedCount(data.uncategorizedCount);
+  }, []);
+
+  const fetchLibrary = useCallback(async (playlistName?: string | null) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setIsLoading(true);
-      const data = await LibraryService.getSongs();
-      setSongs(data);
-      if (data.length > 0 && !currentSong) {
-        setCurrentSong(data[0]);
+      let library: Song[] = [];
+      if (playlistName === null) {
+        library = await LibraryService.getSongs();
+        library = library.filter((song) => !song.playlist);
+      } else if (playlistName) {
+        library = await LibraryService.getPlaylistSongs(playlistName);
+      } else {
+        library = await LibraryService.getSongs();
       }
+      const normalized = normalizeSongs(library);
+      setSongs(normalized);
+      setCurrentSong((prev) => prev && normalized.find((song) => song.id === prev.id) ? prev : normalized[0] || null);
     } catch (err) {
-      setError('FATAL: CONNECTION_REFUSED_TO_MAINFRAME');
       console.error(err);
+      setError('FATAL: CONNECTION_REFUSED_TO_MAINFRAME');
     } finally {
       setIsLoading(false);
     }
-  }, [currentSong]);
+  }, [normalizeSongs]);
 
-  // Fetch songs on mount
-  useEffect(() => {
-    fetchSongs();
+  const refreshSystemStats = useCallback(async () => {
+    try {
+      const raw = await SystemService.getStats();
+      const nodeLoad = Math.min(100, Math.max(0, raw.cpu));
+      setStats({
+        latency: Math.max(8, Math.min(40, Math.round(raw.cpu / 2) + 10)),
+        status: nodeLoad > 70 ? 'THROTTLED' : 'OPTIMIZED',
+        uptime: raw.uptime,
+        nodeLoad,
+        nodeName: `${raw.platform.toUpperCase()}-${raw.arch.toUpperCase()}`
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }, []);
 
-  // Simulate system clock
   useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      setStats(prev => ({
-        ...prev,
-        time: now.toLocaleTimeString('en-GB', { hour12: false }),
-        cpu: Math.max(8, Math.min(25, prev.cpu + (Math.random() > 0.5 ? 1 : -1)))
-      }));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    addLog('CORE', 'Memory allocation successful.');
+    addLog('NET', 'Establishing handshake with MAINFRAME...');
+    addLog('UI', 'Cyber terminal layout initialized.');
 
-  const handleSongSelect = useCallback((song: Song) => {
+    fetchPlaylists().catch(() => undefined);
+    fetchLibrary().catch(() => undefined);
+    refreshSystemStats().catch(() => undefined);
+
+    const interval = setInterval(() => {
+      refreshSystemStats().catch(() => undefined);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [addLog, fetchLibrary, fetchPlaylists, refreshSystemStats]);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    audioRef.current.volume = volume / 100;
+  }, [volume]);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.play().catch((err) => {
+        console.error('Playback failed', err);
+        setIsPlaying(false);
+      });
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying, currentSong]);
+
+  const handleSongSelect = async (song: Song) => {
     setCurrentSong(song);
     setIsPlaying(true);
-  }, []);
-
-  // Render content based on ViewMode
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center flex-1 text-[#9046FF] animate-pulse">
-          &gt; INITIALIZING_UPLINK...
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="flex flex-col items-center justify-center flex-1 text-red-500 gap-4">
-          <div className="border border-red-500 p-4">
-            <h2 className="font-bold text-xl mb-2">SYSTEM_FAILURE</h2>
-            <p>{error}</p>
-          </div>
-          <button
-            onClick={() => window.location.reload()}
-            className="border border-[#9046FF] px-4 py-2 hover:bg-[#9046FF] hover:text-black text-[#9046FF]"
-          >
-            [ REBOOT_SYSTEM ]
-          </button>
-        </div>
-      );
-    }
-
-    if (viewMode === ViewMode.UPLOAD) {
-      return <UploadView onUploadComplete={fetchSongs} />;
-    }
-
-    return (
-      <MainLibrary
-        songs={songs}
-        currentSong={currentSong || songs[0] || null}
-        onSelect={handleSongSelect}
-        query={searchQuery}
-      />
-    );
+    addLog('PROCESS', `Streaming PID ${song.hexId} (Encrypted).`);
+    const insight = INSIGHT_TEMPLATES[Math.floor(Math.random() * INSIGHT_TEMPLATES.length)];
+    setNeuralInsight(insight);
+    addLog('AI', `Neural insight generated for ${song.hexId}`);
   };
 
+  const handleTogglePlay = () => {
+    setIsPlaying((prev) => !prev);
+    addLog('SYS', isPlaying ? 'Playback suspended.' : 'Playback resumed.');
+  };
+
+  const handleSeek = (percent: number) => {
+    if (!audioRef.current || !audioRef.current.duration) return;
+    const nextTime = (percent / 100) * audioRef.current.duration;
+    audioRef.current.currentTime = nextTime;
+    setProgress(percent);
+  };
+
+  const handleSelectLibrary = () => {
+    setViewMode(ViewMode.LIBRARY);
+    setSelectedPlaylist(null);
+    fetchLibrary().catch(() => undefined);
+  };
+
+  const handleSelectPlaylist = (playlist: Playlist | null) => {
+    setViewMode(ViewMode.PLAYLIST);
+    setSelectedPlaylist(playlist);
+    fetchLibrary(playlist?.name || null).catch(() => undefined);
+  };
+
+  const handleSelectUpload = () => {
+    setViewMode(ViewMode.UPLOAD);
+  };
+
+  const handleCreatePlaylist = async (name: string) => {
+    try {
+      const playlist = await LibraryService.createPlaylist(name);
+      setPlaylists((prev) => [...prev, playlist]);
+      addLog('SYS', `Playlist created: ${playlist.name}`);
+    } catch (err) {
+      console.error(err);
+      addLog('WARN', 'Playlist creation failed.');
+    }
+  };
+
+  const handleRefreshLibrary = async () => {
+    try {
+      await LibraryService.refreshLibrary();
+      await fetchPlaylists();
+      await fetchLibrary(selectedPlaylist?.name || null);
+      addLog('CORE', 'Library refresh complete.');
+    } catch (err) {
+      console.error(err);
+      addLog('WARN', 'Library refresh failed.');
+    }
+  };
+
+  const handleUpload = async (file: File, playlistName?: string | null) => {
+    await LibraryService.uploadSong(file, playlistName);
+    await fetchPlaylists();
+    if (viewMode !== ViewMode.UPLOAD) {
+      await fetchLibrary(selectedPlaylist?.name || null);
+    }
+    addLog('UPLOAD', `Upload complete: ${file.name}`);
+  };
+
+  const mainTitle = useMemo(() => {
+    if (viewMode === ViewMode.UPLOAD) return 'Upload Interface';
+    if (viewMode === ViewMode.PLAYLIST) {
+      return selectedPlaylist ? `Playlist: ${selectedPlaylist.name}` : 'Playlist: UNCATEGORIZED';
+    }
+    return 'Core Process Library';
+  }, [viewMode, selectedPlaylist]);
+
+  const timeLabel = useMemo(() => {
+    return `${formatTime(currentTime)} / ${formatTime(duration)}`;
+  }, [currentTime, duration]);
+
   return (
-    <div className="h-screen flex flex-col p-2 bg-black select-none overflow-hidden text-[#9046FF]">
-      {/* Top Meta Bar */}
-      <TerminalHeader stats={stats} />
+    <div className="flex-1 flex flex-col overflow-hidden bg-terminal-bg relative">
+      <Header stats={stats} />
 
-      <div className="flex flex-1 min-h-0">
-        {/* Left Side: Navigation & Playlists */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         <Sidebar
-          currentView={viewMode}
-          setView={setViewMode}
-          playlists={MOCK_PLAYLISTS}
+          playlists={playlists}
+          uncategorizedCount={uncategorizedCount}
+          viewMode={viewMode}
+          selectedPlaylistId={selectedPlaylist?.id || null}
+          onSelectLibrary={handleSelectLibrary}
+          onSelectUpload={handleSelectUpload}
+          onSelectPlaylist={handleSelectPlaylist}
+          onCreatePlaylist={handleCreatePlaylist}
+          onRefreshLibrary={handleRefreshLibrary}
         />
 
-        {/* Center: Content Area */}
-        {renderContent()}
+        <main className="flex-1 flex flex-col lg:grid lg:grid-cols-12 overflow-hidden">
+          <section className="lg:col-span-8 flex flex-col border-r-2 border-terminal-border">
+            {viewMode === ViewMode.UPLOAD ? (
+              <UploadPanel playlists={playlists} onUpload={handleUpload} />
+            ) : (
+              <MainContent
+                songs={songs}
+                currentSong={currentSong}
+                title={mainTitle}
+                onSelect={handleSongSelect}
+                isLoading={isLoading}
+                error={error}
+              />
+            )}
+            <div className="h-48 border-t-2 border-terminal-border bg-black">
+              <SystemLogs logs={logs} />
+            </div>
+          </section>
 
-        {/* Right Side: Queue & Search */}
-        <RightPanel
-          songs={songs}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-        />
+          <section className="lg:col-span-4 flex flex-col bg-black/40">
+            <RightPanel currentSong={currentSong} neuralInsight={neuralInsight} isPlaying={isPlaying} />
+          </section>
+        </main>
       </div>
 
-      {/* Footer: Controls */}
-      <PlayerBar
-        song={currentSong}
+      <Footer
+        currentSong={currentSong}
         isPlaying={isPlaying}
-        setIsPlaying={setIsPlaying}
+        onTogglePlay={handleTogglePlay}
+        progress={progress}
+        timeLabel={timeLabel}
+        onSeek={handleSeek}
+        volume={volume}
+        setVolume={setVolume}
       />
 
-      {/* Decorative corner brackets */}
-      <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#9046FF] pointer-events-none"></div>
-      <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#9046FF] pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[#9046FF] pointer-events-none"></div>
-      <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#9046FF] pointer-events-none"></div>
+      <audio
+        ref={audioRef}
+        src={currentSong ? LibraryService.getStreamUrl(currentSong.id) : undefined}
+        onTimeUpdate={() => {
+          if (!audioRef.current || !audioRef.current.duration) return;
+          setCurrentTime(audioRef.current.currentTime);
+          setDuration(audioRef.current.duration);
+          setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100);
+        }}
+        onLoadedMetadata={() => {
+          if (!audioRef.current) return;
+          setDuration(audioRef.current.duration);
+        }}
+        onEnded={() => {
+          setIsPlaying(false);
+          setProgress(0);
+        }}
+      />
+
+      <div className="fixed top-0 left-0 right-0 h-[2px] bg-neon-purple/20 pointer-events-none z-[60]"></div>
+      <div className="fixed bottom-0 left-0 right-0 h-[2px] bg-neon-purple/20 pointer-events-none z-[60]"></div>
     </div>
   );
 };

@@ -12,7 +12,8 @@ router.get('/:id', (req, res) => {
         return res.status(404).json({ error: 'SONG_NOT_FOUND' });
     }
 
-    StreamerModule.streamFile(req, res, song.filename);
+    // Pass both filename and playlist to streamer
+    StreamerModule.streamFile(req, res, song.filename, song.playlist);
 });
 
 module.exports = router;

@@ -1,15 +1,18 @@
 
 const fs = require('fs');
 const path = require('path');
-const mime = require('mime-types'); // Using a simpler mapping if package not avail, but we didn't install mime-types. Let's use basic lookup.
-
-
-const { MUSIC_DIR } = require('../paths');
+const { MUSIC_DIR, getPlaylistPath } = require('../paths');
 
 
 const StreamerModule = {
-    streamFile(req, res, filename) {
-        const filePath = path.join(MUSIC_DIR, filename);
+    streamFile(req, res, filename, playlist = null) {
+        // Determine the correct path based on playlist
+        let filePath;
+        if (playlist) {
+            filePath = path.join(getPlaylistPath(playlist), filename);
+        } else {
+            filePath = path.join(MUSIC_DIR, filename);
+        }
 
         if (!fs.existsSync(filePath)) {
             return res.status(404).json({ error: 'FILE_NOT_FOUND' });
@@ -49,13 +52,19 @@ const StreamerModule = {
     getContentType(filename) {
         const ext = path.extname(filename).toLowerCase();
         switch (ext) {
-            case '.mp3': return 'audio/mpeg';
-            case '.wav': return 'audio/wav';
-            case '.ogg': return 'audio/ogg';
-            case '.opus': return 'audio/opus';
-            case '.m4a': return 'audio/mp4';
-            case '.flac': return 'audio/flac';
-            default: return 'application/octet-stream';
+            case '.mp3':
+                return 'audio/mpeg';
+            case '.wav':
+                return 'audio/wav';
+            case '.ogg':
+            case '.opus':
+                return 'audio/ogg';
+            case '.m4a':
+                return 'audio/mp4';
+            case '.flac':
+                return 'audio/flac';
+            default:
+                return 'audio/mpeg';
         }
     }
 };
