@@ -69,7 +69,7 @@ const MainContent: React.FC<MainContentProps> = ({
               {isPlaylist && onRename && (
                 <button
                   onClick={handleStartEdit}
-                  className="ml-2 text-gray-500 hover:text-white transition-colors"
+                  className="ml-2 text-gray-500 hover:text-white transition-colors pt-0.5"
                   title="Rename Playlist"
                 >
                   <span className="material-symbols-outlined text-[14px]">edit</span>
