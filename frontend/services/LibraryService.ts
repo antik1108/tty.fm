@@ -49,6 +49,20 @@ export const LibraryService = {
     return data.playlist as Playlist;
   },
 
+  async renamePlaylist(oldName: string, newName: string): Promise<{ oldName: string; newName: string }> {
+    const response = await fetch(`${API_BASE}/playlists/${encodeURIComponent(oldName)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newName })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to rename playlist: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  },
+
   getStreamUrl(songId: string): string {
     return `${API_BASE}/stream/${songId}`;
   },

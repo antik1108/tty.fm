@@ -260,6 +260,31 @@ const App: React.FC = () => {
     setMobileView((prev) => prev === 'library' ? 'visualizer' : 'library');
   };
 
+  const handleRenamePlaylist = async (newName: string) => {
+    if (!selectedPlaylist) return;
+    try {
+      if (!/^[a-zA-Z0-9_]+$/.test(newName)) {
+        alert('Invalid name. Only A-Z, 0-9, and underscores allowed.');
+        return;
+      }
+
+      const result = await LibraryService.renamePlaylist(selectedPlaylist.name, newName);
+
+      // Update local state
+      setPlaylists((prev) => prev.map((pl) =>
+        pl.id === selectedPlaylist.id
+          ? { ...pl, name: result.newName, id: result.newName.toLowerCase() }
+          : pl
+      ));
+
+      setSelectedPlaylist((prev) => prev ? { ...prev, name: result.newName, id: result.newName.toLowerCase() } : null);
+      addLog('SYS', `Playlist renamed: ${result.oldName} -> ${result.newName}`);
+    } catch (err) {
+      console.error(err);
+      addLog('WARN', 'Playlist rename failed.');
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-terminal-bg relative">
       <Header
@@ -299,6 +324,7 @@ const App: React.FC = () => {
                 onSelect={handleSongSelect}
                 isLoading={isLoading}
                 error={error}
+                onRename={viewMode === ViewMode.PLAYLIST && selectedPlaylist ? handleRenamePlaylist : undefined}
               />
             )}
             <div className="h-48 border-t-2 border-terminal-border bg-black shrink-0 hidden lg:block">

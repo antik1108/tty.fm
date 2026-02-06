@@ -8,6 +8,7 @@ interface MainContentProps {
   onSelect: (song: Song) => void;
   isLoading: boolean;
   error: string | null;
+  onRename?: (newName: string) => Promise<void>;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -16,12 +17,67 @@ const MainContent: React.FC<MainContentProps> = ({
   title,
   onSelect,
   isLoading,
-  error
+  error,
+  onRename
 }) => {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editValue, setEditValue] = React.useState('');
+
+  const isPlaylist = title.startsWith('Playlist: ');
+  const displayTitle = isPlaylist ? title.replace('Playlist: ', '') : title;
+
+  const handleStartEdit = () => {
+    setEditValue(displayTitle);
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    if (!onRename || !editValue.trim() || editValue === displayTitle) {
+      setIsEditing(false);
+      return;
+    }
+    try {
+      await onRename(editValue);
+      setIsEditing(false);
+    } catch (err) {
+      console.error('Rename failed', err);
+      // Optional: show error toast
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSave();
+    if (e.key === 'Escape') setIsEditing(false);
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="bg-terminal-border/40 px-4 py-2 flex justify-between items-center text-[11px] uppercase font-bold text-neon-purple border-b-2 border-terminal-border crt-glow-purple sticky top-0 z-20">
-        <span>{title}</span>
+      <div className="bg-terminal-border/40 px-4 py-2 flex justify-between items-center text-[11px] uppercase font-bold text-neon-purple border-b-2 border-terminal-border crt-glow-purple sticky top-0 z-20 h-[42px]">
+        <div className="flex items-center gap-2 flex-1">
+          {isEditing ? (
+            <input
+              autoFocus
+              className="bg-black border border-neon-purple text-neon-purple px-2 py-0.5 outline-none w-full max-w-[200px] font-bold uppercase animate-pulse shadow-[0_0_10px_rgba(144,70,255,0.3)]"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={handleSave}
+              onKeyDown={handleKeyDown}
+            />
+          ) : (
+            <>
+              <span>{isPlaylist ? 'Playlist: ' : ''}<span className={isPlaylist ? 'text-white' : ''}>{displayTitle}</span></span>
+              {isPlaylist && onRename && (
+                <button
+                  onClick={handleStartEdit}
+                  className="ml-2 text-gray-500 hover:text-white transition-colors"
+                  title="Rename Playlist"
+                >
+                  <span className="material-symbols-outlined text-[14px]">edit</span>
+                </button>
+              )}
+            </>
+          )}
+        </div>
         <div className="flex items-center gap-6">
           <div className="hidden sm:flex items-center gap-2">
             <span className="text-[9px] text-gray-500">INDEX:</span>
@@ -71,8 +127,8 @@ const MainContent: React.FC<MainContentProps> = ({
                   key={song.id}
                   onClick={() => onSelect(song)}
                   className={`cursor-pointer transition-all duration-200 ${isActive
-                      ? 'bg-neon-purple/20 border-l-4 border-neon-purple text-white shadow-[inset_10px_0_15px_-5px_rgba(144,70,255,0.3)]'
-                      : 'hover:bg-white/5 text-cyber-cyan'
+                    ? 'bg-neon-purple/20 border-l-4 border-neon-purple text-white shadow-[inset_10px_0_15px_-5px_rgba(144,70,255,0.3)]'
+                    : 'hover:bg-white/5 text-cyber-cyan'
                     }`}
                 >
                   <td className={`px-6 py-5 font-mono ${isActive ? 'text-white' : 'text-alert-yellow'}`}>
