@@ -29,8 +29,8 @@ const Footer: React.FC<FooterProps> = ({
   }
 
   return (
-    <footer className="h-auto md:h-24 border-t-2 border-terminal-border bg-black flex flex-col md:grid md:grid-cols-[1fr_2fr_1fr] items-center px-6 py-4 md:py-0 gap-6 relative z-10 shrink-0">
-      <div className="w-full flex flex-col gap-1 overflow-hidden">
+    <footer className="h-auto md:h-24 pb-safe-or-6 border-t-2 border-terminal-border bg-black/90 backdrop-blur-md flex flex-col md:grid md:grid-cols-[1fr_2fr_1fr] items-center px-6 py-4 md:py-0 gap-6 relative z-10 shrink-0 shadow-[0_-5px_20px_rgba(144,70,255,0.1)]">
+      <div className="w-full flex-col gap-1 overflow-hidden hidden md:flex">
         <div className="flex justify-between items-end">
           <button
             onClick={onSongClick}
@@ -61,7 +61,30 @@ const Footer: React.FC<FooterProps> = ({
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-6 lg:gap-10">
+      {/* Mobile-only compact player */}
+      <div className="w-full flex items-center justify-between gap-4 md:hidden">
+        <button
+          onClick={onSongClick}
+          className="flex-1 flex flex-col overflow-hidden text-left hover:opacity-80 transition-opacity"
+        >
+          <span className="text-[13px] text-white font-bold uppercase truncate crt-glow-purple">{currentSong.title}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-neon-purple tracking-widest font-black uppercase">Playing</span>
+            <span className="text-[9px] text-gray-500 tabular-nums font-mono">{timeLabel}</span>
+          </div>
+        </button>
+
+        <button
+          onClick={onTogglePlay}
+          className="w-12 h-12 flex items-center justify-center bg-neon-purple text-white rounded-full shadow-[0_0_15px_rgba(144,70,255,0.4)] active:scale-95 transition-all border border-white/20"
+        >
+          <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+            {isPlaying ? 'pause' : 'play_arrow'}
+          </span>
+        </button>
+      </div>
+
+      <div className="hidden md:flex items-center justify-center gap-6 lg:gap-10">
         <button className="text-cyber-cyan hover:text-white transition-colors">
           <span className="material-symbols-outlined text-[24px]">shuffle</span>
         </button>
@@ -86,8 +109,8 @@ const Footer: React.FC<FooterProps> = ({
         </button>
       </div>
 
-      <div className="w-full flex items-center justify-between md:justify-end gap-6">
-        <div className="flex items-center gap-3 flex-1 md:flex-none md:w-40">
+      <div className="hidden md:flex w-full items-center justify-end gap-6">
+        <div className="flex items-center gap-3 w-40">
           <span className="material-symbols-outlined text-matrix-green text-xl crt-glow-green">
             {volume === 0 ? 'volume_off' : volume < 50 ? 'volume_down' : 'volume_up'}
           </span>
@@ -103,7 +126,7 @@ const Footer: React.FC<FooterProps> = ({
             <div className="h-full bg-matrix-green crt-glow-green transition-all" style={{ width: `${volume}%` }}></div>
           </div>
         </div>
-        <div className="border-l border-terminal-border pl-4 hidden sm:block">
+        <div className="border-l border-terminal-border pl-4">
           <span className="block text-[10px] text-neon-purple font-black crt-glow-purple">TTY_NODE_PROC</span>
           <span className="block text-[8px] text-gray-600 uppercase">Kernel_Latest</span>
         </div>

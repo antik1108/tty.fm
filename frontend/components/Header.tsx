@@ -18,9 +18,10 @@ const Header: React.FC<HeaderProps & { onMenuClick: () => void }> = ({ stats, on
         </div>
         <button
           onClick={onMenuClick}
-          className="lg:hidden text-neon-purple p-1 border border-terminal-border active:bg-neon-purple/20"
+          className="lg:hidden text-neon-purple p-1 border border-terminal-border active:bg-neon-purple/20 relative"
         >
           <span className="material-symbols-outlined">menu</span>
+          <div className="absolute top-0 right-0 w-2 h-2 bg-matrix-green rounded-full animate-pulse shadow-[0_0_5px_#00FF00]"></div>
         </button>
       </div>
 
