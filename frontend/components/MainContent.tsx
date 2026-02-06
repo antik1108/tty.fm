@@ -32,7 +32,7 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar bg-black/10">
+      <div className="flex-1 overflow-y-auto overflow-x-auto custom-scrollbar bg-black/10">
         <table className="w-full text-left text-[13px] border-collapse">
           <thead className="sticky top-0 bg-terminal-bg/95 backdrop-blur z-10">
             <tr className="text-gray-500 uppercase border-b-2 border-terminal-border/50">
@@ -70,11 +70,10 @@ const MainContent: React.FC<MainContentProps> = ({
                 <tr
                   key={song.id}
                   onClick={() => onSelect(song)}
-                  className={`cursor-pointer transition-all duration-200 ${
-                    isActive
+                  className={`cursor-pointer transition-all duration-200 ${isActive
                       ? 'bg-neon-purple/20 border-l-4 border-neon-purple text-white shadow-[inset_10px_0_15px_-5px_rgba(144,70,255,0.3)]'
                       : 'hover:bg-white/5 text-cyber-cyan'
-                  }`}
+                    }`}
                 >
                   <td className={`px-6 py-5 font-mono ${isActive ? 'text-white' : 'text-alert-yellow'}`}>
                     {song.hexId}

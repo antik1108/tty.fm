@@ -63,6 +63,9 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<'library' | 'visualizer'>('library');
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const addLog = useCallback((level: SystemLog['level'], message: string) => {
@@ -165,6 +168,10 @@ const App: React.FC = () => {
   const handleSongSelect = async (song: Song) => {
     setCurrentSong(song);
     setIsPlaying(true);
+    // On mobile, automatically switch to visualizer when a song starts playing
+    if (window.innerWidth < 1024) {
+      setMobileView('visualizer');
+    }
     addLog('PROCESS', `Streaming PID ${song.hexId} (Encrypted).`);
     const insight = INSIGHT_TEMPLATES[Math.floor(Math.random() * INSIGHT_TEMPLATES.length)];
     setNeuralInsight(insight);
@@ -187,16 +194,21 @@ const App: React.FC = () => {
     setViewMode(ViewMode.LIBRARY);
     setSelectedPlaylist(null);
     fetchLibrary().catch(() => undefined);
+    // Ensure we are viewing the library content
+    setMobileView('library');
   };
 
   const handleSelectPlaylist = (playlist: Playlist | null) => {
     setViewMode(ViewMode.PLAYLIST);
     setSelectedPlaylist(playlist);
     fetchLibrary(playlist?.name || null).catch(() => undefined);
+    // Ensure we are viewing the library content
+    setMobileView('library');
   };
 
   const handleSelectUpload = () => {
     setViewMode(ViewMode.UPLOAD);
+    setMobileView('library'); // Upload is part of the "library" main content area
   };
 
   const handleCreatePlaylist = async (name: string) => {
@@ -243,9 +255,17 @@ const App: React.FC = () => {
     return `${formatTime(currentTime)} / ${formatTime(duration)}`;
   }, [currentTime, duration]);
 
+  // Handle mobile View Toggling
+  const handleToggleMobileView = () => {
+    setMobileView((prev) => prev === 'library' ? 'visualizer' : 'library');
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-terminal-bg relative">
-      <Header stats={stats} />
+      <Header
+        stats={stats}
+        onMenuClick={() => setIsSidebarOpen(true)}
+      />
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         <Sidebar
@@ -258,10 +278,17 @@ const App: React.FC = () => {
           onSelectPlaylist={handleSelectPlaylist}
           onCreatePlaylist={handleCreatePlaylist}
           onRefreshLibrary={handleRefreshLibrary}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
 
-        <main className="flex-1 flex flex-col lg:grid lg:grid-cols-12 overflow-hidden">
-          <section className="lg:col-span-8 flex flex-col border-r-2 border-terminal-border">
+        <main className="flex-1 flex flex-col lg:grid lg:grid-cols-12 overflow-hidden relative">
+          {/* Main Layout Area - Library/Upload */}
+          <section className={`
+            flex-col border-r-2 border-terminal-border bg-terminal-bg
+            lg:col-span-8 lg:flex 
+            ${mobileView === 'library' ? 'flex absolute inset-0 lg:static' : 'hidden lg:flex'}
+          `}>
             {viewMode === ViewMode.UPLOAD ? (
               <UploadPanel playlists={playlists} onUpload={handleUpload} />
             ) : (
@@ -274,12 +301,17 @@ const App: React.FC = () => {
                 error={error}
               />
             )}
-            <div className="h-48 border-t-2 border-terminal-border bg-black">
+            <div className="h-48 border-t-2 border-terminal-border bg-black shrink-0 hidden lg:block">
               <SystemLogs logs={logs} />
             </div>
           </section>
 
-          <section className="lg:col-span-4 flex flex-col bg-black/40">
+          {/* Right Panel - Visualizer */}
+          <section className={`
+            flex-col bg-black/40
+            lg:col-span-4 lg:flex
+            ${mobileView === 'visualizer' ? 'flex absolute inset-0 lg:static z-20 bg-terminal-bg' : 'hidden lg:flex'}
+          `}>
             <RightPanel currentSong={currentSong} neuralInsight={neuralInsight} isPlaying={isPlaying} />
           </section>
         </main>
@@ -294,6 +326,7 @@ const App: React.FC = () => {
         onSeek={handleSeek}
         volume={volume}
         setVolume={setVolume}
+        onSongClick={handleToggleMobileView}
       />
 
       <audio

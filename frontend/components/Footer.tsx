@@ -10,6 +10,7 @@ interface FooterProps {
   onSeek: (percent: number) => void;
   volume: number;
   setVolume: (val: number) => void;
+  onSongClick: () => void;
 }
 
 const Footer: React.FC<FooterProps> = ({
@@ -20,7 +21,8 @@ const Footer: React.FC<FooterProps> = ({
   timeLabel,
   onSeek,
   volume,
-  setVolume
+  setVolume,
+  onSongClick
 }) => {
   if (!currentSong) {
     return <footer className="h-16 border-t-2 border-terminal-border bg-black" />;
@@ -30,10 +32,13 @@ const Footer: React.FC<FooterProps> = ({
     <footer className="h-auto md:h-24 border-t-2 border-terminal-border bg-black flex flex-col md:grid md:grid-cols-[1fr_2fr_1fr] items-center px-6 py-4 md:py-0 gap-6 relative z-10 shrink-0">
       <div className="w-full flex flex-col gap-1 overflow-hidden">
         <div className="flex justify-between items-end">
-          <div className="flex flex-col overflow-hidden">
+          <button
+            onClick={onSongClick}
+            className="flex flex-col overflow-hidden text-left hover:opacity-80 transition-opacity"
+          >
             <span className="text-[11px] text-white font-bold uppercase truncate">{currentSong.title}</span>
             <span className="text-[9px] text-neon-purple tracking-widest font-black uppercase">Encrypted_Stream</span>
-          </div>
+          </button>
           <span className="text-[10px] text-gray-500 tabular-nums font-mono whitespace-nowrap ml-2">{timeLabel}</span>
         </div>
         <div

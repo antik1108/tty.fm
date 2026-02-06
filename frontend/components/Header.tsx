@@ -5,7 +5,7 @@ interface HeaderProps {
   stats: SystemStats;
 }
 
-const Header: React.FC<HeaderProps> = ({ stats }) => {
+const Header: React.FC<HeaderProps & { onMenuClick: () => void }> = ({ stats, onMenuClick }) => {
   return (
     <header className="h-auto border-b-2 border-terminal-border bg-black flex flex-col lg:grid lg:grid-cols-[256px_1fr_256px] divide-y-2 lg:divide-y-0 lg:divide-x-2 divide-terminal-border shrink-0 z-40">
       <div className="p-4 flex items-center justify-between">
@@ -16,7 +16,10 @@ const Header: React.FC<HeaderProps> = ({ stats }) => {
             <span className="text-gray-500 uppercase">Mode: Cyber_Terminal</span>
           </div>
         </div>
-        <button className="lg:hidden text-neon-purple p-1 border border-terminal-border active:bg-neon-purple/20">
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden text-neon-purple p-1 border border-terminal-border active:bg-neon-purple/20"
+        >
           <span className="material-symbols-outlined">menu</span>
         </button>
       </div>
