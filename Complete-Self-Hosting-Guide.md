@@ -68,11 +68,11 @@ Which basically means: *"Trust me, it works on my laptop."*
 
 ### But What If...
 
-- You're on college Wi-Fi ❌ 
-- You're behind CGNAT (mobile hotspot) ❌ 
-- You have no public IP ❌ 
-- You want to **learn** infrastructure, not hide from it ❌ 
-- You want a **real URL**, not screenshots ❌ 
+- ❌ You're on college Wi-Fi 
+- ❌ You're behind CGNAT (mobile hotspot)
+- ❌ You have no public IP
+- ❌ You want to **learn** infrastructure, not hide from it
+- ❌ You want a **real URL**, not screenshots
 
 This guide documents my **real journey**:
 
