@@ -13,6 +13,8 @@
 
 > This isn't just another music player. It's my journey into understanding servers, self-hosting, reverse tunnels, and DevOps — while building something that actually looks cool.
 
+📖 Full Guide: [Complete-Self-Hosting-Guide.md](Complete-Self-Hosting-Guide.md)
+
 ---
 
 ## 🎯 Why This Exists
@@ -51,6 +53,15 @@ Yes, it's a music player. But it's also my playground for understanding:
 | 🎚️ **Media Controls** | Volume, seek, play/pause with keyboard shortcuts |
 | 📱 **Responsive Design** | Works on desktop, tablet, and mobile |
 | 🔄 **Auto-Reconnect** | Frontend handles backend restarts gracefully |
+
+---
+
+## 📸 Screenshots
+
+<div align="center">
+  <img src="assets/tty_fm_ss.png" width="48%" alt="TTY.FM Screenshot">
+  <img src="assets/terminal_pic.png" width="48%" alt="Terminal Picture">
+</div>
 
 ---
 
