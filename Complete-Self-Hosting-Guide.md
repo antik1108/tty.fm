@@ -11,16 +11,18 @@
 [![Perfect for beginners](https://img.shields.io/badge/Perfect%20for-Beginners-green)]()
 [![No cloud required](https://img.shields.io/badge/No%20cloud-Required-blue)]()
 
----
-
-## 📸 Screenshots
-
 <div align="center">
-  <img src="assets/tty_fm_ss.png" width="48%" alt="TTY.FM Screenshot">
-  <img src="assets/terminal_pic.png" width="48%" alt="Terminal Picture">
+  <table>
+    <tr>
+      <td width="50%">
+        <img src="./assets/tty_fm_ss.png" width="100%" alt="Photo 1" style="max-width: 500px; height: auto;">
+      </td>
+      <td width="50%">
+        <img src="./assets/terminal_pic.png" width="100%" alt="Photo 2" style="max-width: 500px; height: auto;">
+      </td>
+    </tr>
+  </table>
 </div>
-
----
 
 ---
 
@@ -308,10 +310,10 @@ Access:   Terminal only
 ```
 
 **You DO NOT need:**
-- ❌ Public IP
-- ❌ Router access
-- ❌ Port forwarding
-- ❌ Ethernet cable
+❌ Public IP
+❌ Router access
+❌ Port forwarding
+❌ Ethernet cable
 
 ### Tech Stack
 
